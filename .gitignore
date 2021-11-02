@@ -1,0 +1,6 @@
+*.swp
+*_pb2.py
+
+.cache/
+.vscode/
+build/
