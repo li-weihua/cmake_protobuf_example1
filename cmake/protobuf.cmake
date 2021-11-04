@@ -11,6 +11,28 @@ macro(configure_protobuf VERSION PROTOBUF_NAMESPACE)
     set(PROTOBUF_CFLAGS "-Dgoogle=${PROTOBUF_NAMESPACE}")
     set(PROTOBUF_CXXFLAGS "-Dgoogle=${PROTOBUF_NAMESPACE}")
 
+    set(Protobuf_BIN_DIR "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/bin")
+    find_file (CENTOS_FOUND centos-release PATHS /etc)
+    if (CENTOS_FOUND)
+        set(Protobuf_LIB_DIR "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/lib64")
+    else (CENTOS_FOUND)
+        set(Protobuf_LIB_DIR "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/lib")
+    endif (CENTOS_FOUND)
+    set(Protobuf_INCLUDE_DIR "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/include")
+    set(Protobuf_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/include")
+    set(Protobuf_PROTOC_EXECUTABLE  "${Protobuf_BIN_DIR}/protoc")
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(Protobuf_LIBRARY "${Protobuf_LIB_DIR}/libprotobufd.a")
+        set(Protobuf_PROTOC_LIBRARY "${Protobuf_LIB_DIR}/libprotocd.a")
+        set(Protobuf_LITE_LIBRARY "${Protobuf_LIB_DIR}/libprotobuf-lited.a")
+    else()
+        set(Protobuf_LIBRARY "${Protobuf_LIB_DIR}/libprotobuf.a")
+        set(Protobuf_PROTOC_LIBRARY "${Protobuf_LIB_DIR}/libprotoc.a")
+        set(Protobuf_LITE_LIBRARY "${Protobuf_LIB_DIR}/libprotobuf-lite.a")
+    endif()
+
+    # add BUILD_BYPRODUCTS to let ninja work!
     ExternalProject_Add(${Protobuf_TARGET}
         PREFIX ${Protobuf_TARGET}
         URL ${Protobuf_PKG_URL}
@@ -27,27 +49,9 @@ macro(configure_protobuf VERSION PROTOBUF_NAMESPACE)
             -Dprotobuf_WITH_ZLIB=OFF
         SOURCE_SUBDIR cmake
         BINARY_DIR ${Protobuf_INSTALL_DIR}/${Protobuf_TARGET}/src/${Protobuf_TARGET}
+        BUILD_BYPRODUCTS ${Protobuf_LIBRARY} ${Protobuf_PROTOC_LIBRARY} ${Protobuf_LITE_LIBRARY} ${Protobuf_PROTOC_EXECUTABLE}
     )
 
-    set(Protobuf_BIN_DIR "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/bin")
-    find_file (CENTOS_FOUND centos-release PATHS /etc)
-    if (CENTOS_FOUND)
-        set(Protobuf_LIB_DIR "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/lib64")
-    else (CENTOS_FOUND)
-        set(Protobuf_LIB_DIR "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/lib")
-    endif (CENTOS_FOUND)
-    set(Protobuf_INCLUDE_DIR "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/include")
-    set(Protobuf_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${Protobuf_TARGET}/include")
-    set(Protobuf_PROTOC_EXECUTABLE  "${Protobuf_BIN_DIR}/protoc")
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(Protobuf_LIBRARY "${Protobuf_LIB_DIR}/libprotobufd.a")
-        set(Protobuf_PROTOC_LIBRARY "${Protobuf_LIB_DIR}/libprotocd.a")
-        set(Protobuf_LITE_LIBRARY "${Protobuf_LIB_DIR}/libprotobuf-lited.a")
-    else()
-        set(Protobuf_LIBRARY "${Protobuf_LIB_DIR}/libprotobuf.a")
-        set(Protobuf_PROTOC_LIBRARY "${Protobuf_LIB_DIR}/libprotoc.a")
-        set(Protobuf_LITE_LIBRARY "${Protobuf_LIB_DIR}/libprotobuf-lite.a")
-    endif()
     set(protolibType STATIC)
 
     add_library(protobuf::libprotobuf ${protolibType} IMPORTED)
